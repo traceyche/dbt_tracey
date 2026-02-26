@@ -3,16 +3,18 @@
 with daily as (
     select * from {{ ref('prep_weather_daily') }}
 )
+
 select
     station_id,
     date_trunc('week', date) as week_start,
-    avg(avg_temperature) as avg_weekly_temperature,
-    max(max_temperature) as max_weekly_temperature,
-    min(min_temperature) as min_weekly_temperature,
-    sum(precipitation) as total_weekly_rain,
-    sum(snowfall) as total_weekly_snow,
-    sum(case when rainy_flag = 1 then 1 else 0 end) as rainy_days,
-    sum(case when snowy_flag = 1 then 1 else 0 end) as snowy_days,
-    sum(case when sunny_flag = 1 then 1 else 0 end) as sunny_days
+    avg(avg_temp_c) as avg_weekly_temperature,
+    max(max_temp_c) as max_weekly_temperature,
+    min(min_temp_c) as min_weekly_temperature,
+    sum(precipitation_mm) as total_weekly_rain,
+    sum(max_snow_mm) as total_weekly_snow,
+    avg(avg_wind_speed_kmh) as avg_wind_speed_weekly,
+    avg(avg_wind_direction) as avg_wind_direction_weekly,
+    max(wind_peakgust_kmh) as max_wind_gust_weekly,
+    sum(sun_minutes) as total_sun_minutes_weekly
 from daily
 group by 1,2
