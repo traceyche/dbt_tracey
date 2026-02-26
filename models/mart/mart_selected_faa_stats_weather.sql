@@ -1,5 +1,6 @@
 {{ config(materialized='table') }}
 
+-- Aggregate departures per airport per day
 with departures as (
     select
         origin as airport_code,
@@ -14,6 +15,8 @@ with departures as (
     from {{ ref('prep_flights') }}
     group by origin, flight_date
 ),
+
+-- Aggregate arrivals per airport per day
 arrivals as (
     select
         dest as airport_code,
@@ -28,13 +31,16 @@ arrivals as (
     from {{ ref('prep_flights') }}
     group by dest, flight_date
 ),
+
+-- Weather data
 weather as (
     select * from {{ ref('prep_weather_daily') }}
 )
 
+-- Final SELECT: combine flights, airports, and weather
 select
-    prep_airports.airport_code,
-    prep_airports.airport_name,
+    prep_airports.faa as airport_code,
+    prep_airports.name as airport_name,
     prep_airports.city,
     prep_airports.country,
     coalesce(departures.flight_date, arrivals.flight_date, weather.date) as flight_date,
@@ -55,8 +61,8 @@ select
     weather.avg_wind_speed_kmh,
     weather.wind_peakgust_kmh
 from {{ ref('prep_airports') }}
-left join departures on prep_airports.airport_code = departures.airport_code
-left join arrivals on prep_airports.airport_code = arrivals.airport_code
+left join departures on prep_airports.faa = departures.airport_code
+left join arrivals on prep_airports.faa = arrivals.airport_code
     and arrivals.flight_date = departures.flight_date
-left join weather on prep_airports.airport_code = weather.airport_code
+left join weather on prep_airports.faa = weather.airport_code
     and weather.date = coalesce(departures.flight_date, arrivals.flight_date)
