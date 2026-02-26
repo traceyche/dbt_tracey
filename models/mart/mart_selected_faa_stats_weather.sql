@@ -37,12 +37,13 @@ arrivals as (
     from flights
     group by 1,2
 )
+
 select
-    a.airport_id,
+    a.airport_code,
     a.airport_name,
     a.city,
     a.country,
-    d.flight_date,
+    coalesce(d.flight_date, ar.flight_date, w.date) as flight_date,
     coalesce(d.unique_departure_connections,0) as unique_departure_connections,
     coalesce(ar.unique_arrival_connections,0) as unique_arrival_connections,
     coalesce(d.total_departures,0)+coalesce(ar.total_arrivals,0) as total_flights_planned,
@@ -60,6 +61,6 @@ select
     w.avg_wind_speed_kmh,
     w.wind_peakgust_kmh
 from airports a
-left join departures d on a.airport_code = d.airport_code and d.flight_date = w.date
-left join arrivals ar on a.airport_code = ar.airport_code and ar.flight_date = w.date
-left join weather w on a.airport_code = w.airport_code and w.date = d.flight_date
+left join departures d on a.airport_code = d.airport_code
+left join arrivals ar on a.airport_code = ar.airport_code and ar.flight_date = d.flight_date
+left join weather w on a.airport_code = w.airport_code and w.date = coalesce(d.flight_date, ar.flight_date)
